@@ -23,6 +23,10 @@ const Vendor = sequelize.define('vendor', {
   address: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  company: {
+    type: Sequelize.STRING,
+    allowNull: false
   }
 });
 

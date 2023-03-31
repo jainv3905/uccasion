@@ -93,6 +93,14 @@ Vendor.hasMany(Vendor_Service, {
 });
 Vendor_Service.belongsTo(Vendor, { constraints: true, onDelete: 'CASCADE' });
 
+Vendor.hasMany(Category, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+Category.belongsTo(Vendor, { constraints: true, onDelete: 'CASCADE' });
+
 app.use(adminRoutes);
 app.use(authRoutes);
 app.use(userRoutes);

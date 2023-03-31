@@ -100,11 +100,20 @@ exports.postOccasion = async (req, res, next) => {
 }
 
 exports.postAddVendor = async (req, res, next) => {
+ const password = req.body.password;
+ const email = req.body.email;
+ const errors = validationResult(req);
+ if (!errors.isEmpty()) {
+    return res.status(422).json({
+        errorMessage: errors.array()[0].msg,
+    });
+}
  const vendor = await Vendor.create({
    name: req.body.name,
-   email: req.body.email,
+   email: email,
    phone: req.body.phone,
    address: req.body.address,
+   company: req.body.company,
  });
  try{
     if(!vendor){
@@ -112,6 +121,17 @@ exports.postAddVendor = async (req, res, next) => {
         error.statusCode = 401;
         throw error;
     }
+    const hashedPassword = await bcrypt
+    .hash(password, 12);
+    if (!hashedPassword) {
+    const error = new Error('password not hashed');
+    error.statusCode = 401;
+    throw error;
+}
+    await Login.create({
+    email:email,
+    password:hashedPassword
+})
     for(v of req.body.vendorservice){
     const vendorService = await Vendor_Service.create({
         service: v,
@@ -150,12 +170,14 @@ exports.postAddServices = async (req, res, next) => {
 }
 
 exports.postAddCategory = async (req, res, next) => {
+    let image;
     const category = await Category.create({
         category:req.body.category,
         address:req.body.address,
         description:req.body.description,
         type:req.body.type,
-        serviceId: req.body.serviceId
+        serviceId: req.body.serviceId,
+        vendorId: req.body.vendorId
     });
     try{
         if(!category){
@@ -163,13 +185,14 @@ exports.postAddCategory = async (req, res, next) => {
             error.statusCode = 401;
             throw error;
         }
+        console.log(req.files.image);
         for(i of req.files.image){
-            let image = await Category_Image.create({
+            image = await Category_Image.create({
                 image:i.filename,
                 categoryId:category.id
             })
         }
-        res.status(201).json({category:category, status: true});
+        res.status(201).json({category:category,image:image ,status: true});
     } catch(err){
         if(!err.statusCode){
             err.statusCode = 500;

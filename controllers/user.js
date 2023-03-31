@@ -8,27 +8,35 @@ const Event = require('../models/event');
 const Event_Service = require('../models/event-service');
 
 exports.postAddGuest = async (req, res, next) => {
-    guestCount
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({
             errorMessage: errors.array()[0].msg,
         });
     }
-    const guest_limit = await Guest.findAll({where:{userId:req.userId}});
-    for(limit of guest_limit){
-        
+    let totalGuest, guestLimit = 0;
+    let guestCount = await Event.findAll({ where: { userId: req.userId } });
+    for (g of guestCount) {
+        totalGuest = g.guestCount;
     }
-    const guest = await Guest.create({
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        relationship: req.body.relationship,
-        age: req.body.age,
-        email: req.body.email,
-        capacity: req.body.capacity,
-        userId: req.userId,
-    })
+    const guest_limit = await Guest.findAll({ where: { userId: req.userId } });
+    for (limit of guest_limit) {
+        guestLimit += +limit.capacity;
+    }
     try {
+        if ((guestLimit + req.body.capacity) > totalGuest) {
+            const error = new Error(`!sorry...your guest limit is ${totalGuest}`);
+            error.status = 400;
+            throw error;
+        }
+        const guest = await Guest.create({
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            relationship: req.body.relationship,
+            email: req.body.email,
+            capacity: req.body.capacity,
+            userId: req.userId,
+        })
         if (!guest) {
             const error = new Error('guest not created');
             error.status = 400;
