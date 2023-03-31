@@ -5,12 +5,19 @@ const Service = require('../models/service');
 const Category = require('../models/category');
 const Category_Image = require('../models/category-image');
 const Event = require('../models/event');
+const Event_Service = require('../models/event-service');
+
 exports.postAddGuest = async (req, res, next) => {
+    guestCount
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({
             errorMessage: errors.array()[0].msg,
         });
+    }
+    const guest_limit = await Guest.findAll({where:{userId:req.userId}});
+    for(limit of guest_limit){
+        
     }
     const guest = await Guest.create({
         first_name: req.body.first_name,
@@ -18,6 +25,7 @@ exports.postAddGuest = async (req, res, next) => {
         relationship: req.body.relationship,
         age: req.body.age,
         email: req.body.email,
+        capacity: req.body.capacity,
         userId: req.userId,
     })
     try {
@@ -72,92 +80,205 @@ exports.firstPage = async (req, res, next) => {
 exports.getCategoryPage = async (req, res, next) => {
     const serviceId = req.params.id;
     const category = await Category.findAll({ where: { serviceId: serviceId }, include: Category_Image });
-    try{
-      if(category.length == 0){
-        const error = new Error('category not found');
-        error.statusCode = 400;
-        throw error;
-      }
-      res.status(200).json({category:category})
-    } catch(err) {
-        if(!err.statusCode){
+    try {
+        if (category.length == 0) {
+            const error = new Error('category not found');
+            error.statusCode = 400;
+            throw error;
+        }
+        res.status(200).json({ category: category })
+    } catch (err) {
+        if (!err.statusCode) {
             err.statusCode = 500;
         }
-       throw(err); 
+        throw (err);
     }
 }
 
 exports.searchServices = async (req, res, next) => {
- const name = req.body.service;
- const service = await Service.findOne({where:{service:name}});
- try {
-    if (!service) {
-        const error = new Error('service not found');
-        error.statusCode = 404;
-        throw error
+    const name = req.body.service;
+    const service = await Service.findOne({ where: { service: name } });
+    try {
+        if (!service) {
+            const error = new Error('service not found');
+            error.statusCode = 404;
+            throw error
+        }
+        res.status(200).json({ Service: service, status: true });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
     }
-    res.status(200).json({ Service: service, status: true });
-} catch (err) {
-    if (!err.statusCode) {
-        err.statusCode = 500;
-    }
-    next(err);
-}   
 }
 
 exports.searchCategory = async (req, res, next) => {
     const name = req.body.category;
     const serviceId = req.body.serviceId;
-    const category = await Category.findOne({where:
-        [{serviceId:serviceId},{category:name}]
-        ,include:Category_Image});
+    const category = await Category.findOne({
+        where:
+            [{ serviceId: serviceId }, { category: name }]
+        , include: Category_Image
+    });
     try {
         if (!category) {
             const error = new Error('category not found');
             error.statusCode = 404;
             throw error
         }
-        res.status(200).json({ category:category, status: true });
+        res.status(200).json({ category: category, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
-    }   
+    }
 }
 
 exports.getVenueAddress = async (req, res, next) => {
- const category = await Category.findAll({where: {serviceId:1}});
- try{
-    if(!category){
-        const error = new Error('category not found');
-        error.statusCode = 404;
-        throw error
+    const type = req.body.type;
+    const category = await Category.findAll({ where: [{ serviceId: 1 }, { type: type }] });
+    try {
+        if (!category) {
+            const error = new Error('category not found');
+            error.statusCode = 404;
+            throw error
+        }
+        res.status(200).json({ category: category, status: true });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
     }
-    res.status(200).json({ category:category, status: true });
-} catch (err) {
-    if (!err.statusCode) {
-        err.statusCode = 500;
-    }
-    next(err);
-}
 }
 
 exports.addEventDate = async (req, res, next) => {
- const date = req.body.date;
- const event = await Event.create({
-    date: date
- })
- try{
-    res.status(201).json({"message": "date added succesfully"});
- } catch(err) {
-    if(!err.statusCode){
-        err.statusCode = 500;
+    const date = req.body.date;
+    const event = await Event.create({
+        date: date,
+        userId: req.userId
+    })
+    try {
+        res.status(201).json({ event: event });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
     }
-    next(err);
- }
 }
 
-exports.addUserOccasion = async (req, res, next) => {
- const occasion = req.body.occasion;  
+exports.addEventOccasion = async (req, res, next) => {
+    const occasion = req.body.occasion;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.event = occasion;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                event: occasion,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
+
+exports.addEventGuest = async (req, res, next) => {
+    const guest = req.body.guest;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.guestCount = guest;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                guestCount: guest,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
+
+exports.addEventBudget = async (req, res, next) => {
+    const budget = req.body.budget;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.budget = budget;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                budget: budget,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
+
+exports.addEventVenue = async (req, res, next) => {
+    let id;
+    const eventId = req.body.eventId;
+    const occasion = req.body.occasion;
+    const service = req.body.service;
+    const category = req.body.category;
+    try {
+        const hasEvent = await Event.findByPk(eventId);
+        if (hasEvent) {
+            id = eventId
+        } else {
+            const event = await Event.create({
+                event: occasion,
+                userId: req.userId
+            })
+            if (!event) {
+                const error = new Error('event not created');
+                error.statusCode = 401;
+                throw error;
+            }
+            id = event.id;
+        }
+        const event_service = await Event_Service.create({
+            service: service,
+            category: category,
+            eventId: id
+        })
+        if (!event_service) {
+            const error = new Error('service not created');
+            error.statusCode = 401;
+            throw error;
+        }
+        res.status(200).json({ service: event_service });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
 }
