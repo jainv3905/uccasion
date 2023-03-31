@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express();
 const { body } = require('express-validator/check');
-const { authPlugins } = require('mysql2');
 const userController = require('../controllers/user');
 const isAuth = require('../middleware/is-auth');
 
@@ -22,8 +21,16 @@ router.post('/search-service', isAuth, userController.searchServices);
 
 router.post('/search-category', isAuth, userController.searchCategory);
 
-router.get('/get-venue-address', isAuth, userController.getVenueAddress);
+router.post('/get-venue-address', isAuth, userController.getVenueAddress);
 
 router.post('/add-event-date', isAuth, userController.addEventDate);
+
+router.post('/add-event-occasion', isAuth, userController.addEventOccasion);
+
+router.post('/add-event-guest-list', isAuth, userController.addEventGuest);
+
+router.post('/add-event-budget', isAuth, userController.addEventBudget);
+
+router.post('/add-event-venue', isAuth, userController.addEventVenue);
 
 module.exports = router;

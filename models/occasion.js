@@ -12,8 +12,11 @@ const Occasion = sequelize.define('occasion', {
     type: Sequelize.STRING,
     allowNull: false
   },
+  status:{
+    type: Sequelize.STRING
+  },
   logo: {
-    type: Sequelize.STRING,
+    type: Sequelize.STRING
   }
 });
 

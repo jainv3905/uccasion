@@ -2,24 +2,15 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Event = sequelize.define('event', {
+const Vendor_Service = sequelize.define('vendor-service', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
     primaryKey: true
   },
-  date: {
-    type: Sequelize.STRING,
-  },
-  event: {
-    type: Sequelize.STRING
-  },
-  guestCount: {
-    type: Sequelize.INTEGER
-  },
-  budget:{
+  service:{
     type: Sequelize.INTEGER
   }
 });
 
-module.exports = Event;
+module.exports = Vendor_Service;

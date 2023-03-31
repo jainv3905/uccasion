@@ -13,6 +13,9 @@ const { DataTypes } = require('sequelize');
 const multer = require('multer');
 const Category_Image = require('./models/category-image');
 const Event = require('./models/event');
+const Event_Service = require('./models/event-service');
+const Vendor = require('./models/vendor');
+const Vendor_Service = require('./models/vendor-service');
 
 app.use(cors({
     allowedHeaders : "*",
@@ -65,6 +68,30 @@ Category.hasMany(Category_Image, {
   }
 });
 Category_Image.belongsTo(Category, { constraints: true, onDelete: 'CASCADE' });
+
+Category.hasMany(Category_Image, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+Category_Image.belongsTo(Category, { constraints: true, onDelete: 'CASCADE' });
+
+Event.hasMany(Event_Service, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+Event_Service.belongsTo(Event, { constraints: true, onDelete: 'CASCADE' });
+
+Vendor.hasMany(Vendor_Service, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+Vendor_Service.belongsTo(Vendor, { constraints: true, onDelete: 'CASCADE' });
 
 app.use(adminRoutes);
 app.use(authRoutes);

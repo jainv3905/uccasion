@@ -15,6 +15,9 @@ const Service = sequelize.define('service', {
   logo: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  status:{
+    type: Sequelize.STRING
   }
 });
 

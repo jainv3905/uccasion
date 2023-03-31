@@ -29,9 +29,10 @@ exports.postSignup = async (req, res, next) => {
       first_name:req.body.first_name,
       last_name:req.body.last_name,
       email:email,
-      phone:req.body.phone
+      phone:req.body.phone,
+      status:"active"
     })
-    res.status(201).json({message: 'user created', status:true});
+    res.status(201).json({message: 'user created', user:newUser,status:true});
     } catch(err) {
       if(!err.statusCode){
         err.statusCode = 500;
