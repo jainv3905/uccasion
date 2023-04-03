@@ -23,7 +23,7 @@ router.post('/add-vendor', [
                 }
             })
     }),
-    body('phone').isLength({min:6, max:6}).withMessage('phoe must be 6 digit'), 
+    body('phone').isLength({min:6, max:6}).withMessage('phone must be 6 digit'), 
 ],adminController.postAddVendor);
 
 router.post('/category', adminController.postAddCategory);
@@ -33,5 +33,7 @@ router.get('/get-occasion', adminController.getOccasion);
 router.get('/get-service',adminController.getService);
 
 router.get('/get-user', adminController.getUser);
+
+router.get('/get-vendor-details', adminController.getallVendors);
 
 module.exports = router;

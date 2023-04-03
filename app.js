@@ -18,31 +18,34 @@ const Vendor = require('./models/vendor');
 const Vendor_Service = require('./models/vendor-service');
 
 app.use(cors({
-    allowedHeaders : "*",
-    origin : "*"
-  }));
+  allowedHeaders: "*",
+  origin: "*"
+}));
 app.use(express.json());
 
 app.use(
-  multer({ storage:multer.diskStorage({
-    destination:function(req,file,cb){
-      cb(null,"images")
-    },
-    filename:function(req,file,cb){
-      cb(null,file.fieldname+"-"+Date.now()+".jpg")
-    }
-  }) }).fields([
+  multer({
+    storage: multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, "images")
+      },
+      filename: function (req, file, cb) {
+        cb(null, file.fieldname + "-" + Date.now() + ".jpg")
+      }
+    })
+  }).fields([
     { name: 'logo', maxCount: 1 },
-    { name: 'image'}
+    { name: 'outlet', maxCount: 1 },
+    { name: 'image' }
   ])
 );
 
 Service.hasMany(Category, {
-    foriegnKey: {
-      type: DataTypes.UUID,
-      allowNull: false
-    }
-  });
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
 Category.belongsTo(Service, { constraints: true, onDelete: 'CASCADE' });
 
 User.hasMany(Guest, {
@@ -106,17 +109,17 @@ app.use(authRoutes);
 app.use(userRoutes);
 
 app.use((error, req, res, next) => {
-    console.log(error);
-    const status = error.statusCode || 500;
-    const message = error.message;
-    const data = error.data;
-    res.status(status).json({ message: message, data: data,status:false });
-  });
+  console.log(error);
+  const status = error.statusCode || 500;
+  const message = error.message;
+  const data = error.data;
+  res.status(status).json({ message: message, data: data, status: false });
+});
 
 sequelize.sync()
-.then(result => {
-    app.listen(3000, ()=> {
-        console.log('connected');
+  .then(result => {
+    app.listen(3000, () => {
+      console.log('connected');
     })
-})
-.catch(err => console.log(err));
+  })
+  .catch(err => console.log(err));

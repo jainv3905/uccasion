@@ -20,10 +20,6 @@ const Guest = sequelize.define('guest', {
     type: Sequelize.STRING,
     allowNull: false
   },
-  age: {
-    type: Sequelize.INTEGER,
-    allowNull: false
-  },
   email: {
     type: Sequelize.STRING,
     allowNull: false

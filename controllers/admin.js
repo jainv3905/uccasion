@@ -108,12 +108,21 @@ exports.postAddVendor = async (req, res, next) => {
         errorMessage: errors.array()[0].msg,
     });
 }
+if(!req.files){
+    return res.status(422).json({
+        message: 'image not provided',status:'false'
+    });
+}
  const vendor = await Vendor.create({
    name: req.body.name,
    email: email,
    phone: req.body.phone,
-   address: req.body.address,
-   company: req.body.company,
+   outlet_name: req.body.outlet_name,
+   outlet_address: req.body.outlet_address,
+   outlet_contact: req.body.outlet_contact,
+   outlet_description: req.body.outlet_description,
+   status: "continue"
+//    outlet_image: req.files.outlet[0].filename
  });
  try{
     if(!vendor){
@@ -259,4 +268,21 @@ exports.getUser = async (req, res, next) => {
         }
         next(err);
     }   
+}
+
+exports.getallVendors = async (req, res, next) => {
+    const vendor = await Vendor.findAll();
+    try{
+        if(!vendor){
+            const error = new Error('vendor not found');
+            error.statusCode = 401;
+            throw error;
+        }
+    res.status(200).json({vendor:vendor});
+    } catch(err){
+        if(!err.statusCode){
+            err.statusCode = 500;
+        }
+        next(err);
+    } 
 }

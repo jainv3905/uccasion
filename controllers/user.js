@@ -162,93 +162,93 @@ exports.getVenueAddress = async (req, res, next) => {
     }
 }
 
-exports.addEventDate = async (req, res, next) => {
-    const date = req.body.date;
-    const event = await Event.create({
-        date: date,
-        userId: req.userId
-    })
-    try {
-        res.status(201).json({ event: event });
-    } catch (err) {
-        if (!err.statusCode) {
-            err.statusCode = 500;
-        }
-        next(err);
-    }
-}
+// exports.addEventDate = async (req, res, next) => {
+//     const date = req.body.date;
+//     const event = await Event.create({
+//         date: date,
+//         userId: req.userId
+//     })
+//     try {
+//         res.status(201).json({ event: event });
+//     } catch (err) {
+//         if (!err.statusCode) {
+//             err.statusCode = 500;
+//         }
+//         next(err);
+//     }
+// }
 
-exports.addEventOccasion = async (req, res, next) => {
-    const occasion = req.body.occasion;
-    const date = req.body.date;
-    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-    try {
-        if (event) {
-            event.event = occasion;
-            await event.save();
-            res.status(201).json({ event: event });
-        } else {
-            const newEvent = await Event.create({
-                event: occasion,
-                userId: req.userId
-            })
-            res.status(201).json({ event: newEvent });
-        }
-    } catch (err) {
-        if (!err.statusCode) {
-            err.statusCode = 500;
-        }
-        next(err);
-    }
-}
+// exports.addEventOccasion = async (req, res, next) => {
+//     const occasion = req.body.occasion;
+//     const date = req.body.date;
+//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+//     try {
+//         if (event) {
+//             event.event = occasion;
+//             await event.save();
+//             res.status(201).json({ event: event });
+//         } else {
+//             const newEvent = await Event.create({
+//                 event: occasion,
+//                 userId: req.userId
+//             })
+//             res.status(201).json({ event: newEvent });
+//         }
+//     } catch (err) {
+//         if (!err.statusCode) {
+//             err.statusCode = 500;
+//         }
+//         next(err);
+//     }
+// }
 
-exports.addEventGuest = async (req, res, next) => {
-    const guest = req.body.guest;
-    const date = req.body.date;
-    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-    try {
-        if (event) {
-            event.guestCount = guest;
-            await event.save();
-            res.status(201).json({ event: event });
-        } else {
-            const newEvent = await Event.create({
-                guestCount: guest,
-                userId: req.userId
-            })
-            res.status(201).json({ event: newEvent });
-        }
-    } catch (err) {
-        if (!err.statusCode) {
-            err.statusCode = 500;
-        }
-        next(err);
-    }
-}
+// exports.addEventGuest = async (req, res, next) => {
+//     const guest = req.body.guest;
+//     const date = req.body.date;
+//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+//     try {
+//         if (event) {
+//             event.guestCount = guest;
+//             await event.save();
+//             res.status(201).json({ event: event });
+//         } else {
+//             const newEvent = await Event.create({
+//                 guestCount: guest,
+//                 userId: req.userId
+//             })
+//             res.status(201).json({ event: newEvent });
+//         }
+//     } catch (err) {
+//         if (!err.statusCode) {
+//             err.statusCode = 500;
+//         }
+//         next(err);
+//     }
+// }
 
-exports.addEventBudget = async (req, res, next) => {
-    const budget = req.body.budget;
-    const date = req.body.date;
-    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-    try {
-        if (event) {
-            event.budget = budget;
-            await event.save();
-            res.status(201).json({ event: event });
-        } else {
-            const newEvent = await Event.create({
-                budget: budget,
-                userId: req.userId
-            })
-            res.status(201).json({ event: newEvent });
-        }
-    } catch (err) {
-        if (!err.statusCode) {
-            err.statusCode = 500;
-        }
-        next(err);
-    }
-}
+// exports.addEventBudget = async (req, res, next) => {
+//     const budget = req.body.budget;
+//     const date = req.body.date;
+//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+//     try {
+//         if (event) {
+//             event.budget = budget;
+//             await event.save();
+//             res.status(201).json({ event: event });
+//         } else {
+//             const newEvent = await Event.create({
+//                 budget: budget,
+//                 userId: req.userId
+//             })
+//             res.status(201).json({ event: newEvent });
+//         }
+//     } catch (err) {
+//         if (!err.statusCode) {
+//             err.statusCode = 500;
+//         }
+//         next(err);
+//     }
+// }
 
 exports.addEventVenue = async (req, res, next) => {
     let id;
@@ -283,6 +283,24 @@ exports.addEventVenue = async (req, res, next) => {
             throw error;
         }
         res.status(200).json({ service: event_service });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
+
+exports.searchGuestList = async (req, res, next) => {
+    const first_name = req.body.first_name;
+    const guest = await Guest.findOne({where:[{first_name:first_name},{userId: req.userId}]}); 
+    try{
+        if(!guest){
+            const error = new Error('guest not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        res.status(200).json({guest:guest});
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
