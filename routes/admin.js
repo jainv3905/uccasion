@@ -3,6 +3,7 @@ const router = express();
 const adminController = require('../controllers/admin');
 const { body } = require('express-validator/check');
 const Vendor = require('../models/vendor');
+const isAuth = require('../middleware/is-auth');
 
 router.post('/add-login', adminController.addAdminLogin);
 
@@ -35,5 +36,37 @@ router.get('/get-service',adminController.getService);
 router.get('/get-user', adminController.getUser);
 
 router.get('/get-vendor-details', adminController.getallVendors);
+
+router.get('/get-edit-occasion/:id', adminController.getEditOccasion);
+
+router.post('/post-edit-occasion', adminController.postEditOccasion);
+
+router.get('/get-edit-service/:id', adminController.getEditService);
+
+router.post('/post-edit-service', adminController.postEditService);
+
+router.post('/change-occasion-status' , adminController.changeOccasionStatus);
+
+router.post('/change-service-status' , adminController.changeServiceStatus);
+
+router.post('/change-vendor-status', adminController.changeVendorStatus);
+
+router.get('/logout', isAuth , adminController.logout);
+
+router.post('/add-marketing-screens', isAuth ,adminController.addMarketingImage);
+
+router.post('/add-banner', isAuth, adminController.addBanner);
+
+router.get('/get-edit-marketing-images/:id', isAuth, adminController.getEditMarketingImage);
+
+router.post('/post-edit-marketing-images', isAuth, adminController.postEditMarketingImage);
+
+router.get('/delete-marketing-image/:id', isAuth, adminController.deleteMarketingImage);
+
+router.get('/get-edit-banner/:id', isAuth, adminController.getEditBanner);
+
+router.post('/post-edit-banner', isAuth, adminController.postEditBanner);
+
+router.get('/delete-banner/:id', isAuth, adminController.deleteBanners);
 
 module.exports = router;

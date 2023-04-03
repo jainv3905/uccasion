@@ -36,6 +36,8 @@ app.use(
   }).fields([
     { name: 'logo', maxCount: 1 },
     { name: 'outlet', maxCount: 1 },
+    { name: 'marketing', maxCount: 1 },
+    { name: 'banner', maxCount: 1 },
     { name: 'image' }
   ])
 );
