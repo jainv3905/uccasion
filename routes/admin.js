@@ -69,4 +69,20 @@ router.post('/post-edit-banner', isAuth, adminController.postEditBanner);
 
 router.get('/delete-banner/:id', isAuth, adminController.deleteBanners);
 
+router.post('/post-add-vendor-service', isAuth, adminController.postAddVendorService);
+
+router.get('/get-specific-vendor-details/:id', isAuth, adminController.getSpecificVendor)
+
+router.get('/get-specific-vendor-occasion/:id', isAuth, adminController.getSpecificVendorOccasion)
+
+router.get('/get-specific-vendor-service/:id', isAuth, adminController.getSpecificVendorService)
+
+router.post('/get-specific-vendor-category', isAuth, adminController.getSpecificVendorCategory);
+
+router.get('/requested-event', isAuth, adminController.userRequestedEvent);
+
 module.exports = router;
+
+
+
+

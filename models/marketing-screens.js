@@ -11,6 +11,9 @@ const Marketing = sequelize.define('marketing', {
   image: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  index: {
+    type: Sequelize.INTEGER
   }
 });
 

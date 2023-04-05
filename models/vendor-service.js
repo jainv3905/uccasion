@@ -8,7 +8,10 @@ const Vendor_Service = sequelize.define('vendor-service', {
     autoIncrement: true,
     primaryKey: true
   },
-  service:{
+  serviceId:{
+    type: Sequelize.INTEGER
+  },
+  occasionId: {
     type: Sequelize.INTEGER
   }
 });

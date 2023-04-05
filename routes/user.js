@@ -22,16 +22,22 @@ router.post('/search-category', isAuth, userController.searchCategory);
 
 router.post('/get-venue-address', isAuth, userController.getVenueAddress);
 
-// router.post('/add-event-date', isAuth, userController.addEventDate);
+router.post('/add-event-date', isAuth, userController.addEventDate);
 
-// router.post('/add-event-occasion', isAuth, userController.addEventOccasion);
+router.post('/add-event-occasion', isAuth, userController.addEventOccasion);
 
-// router.post('/add-event-guest-list', isAuth, userController.addEventGuest);
+router.post('/add-event-guest-list', isAuth, userController.addEventGuest);
 
-// router.post('/add-event-budget', isAuth, userController.addEventBudget);
+router.post('/add-event-budget', isAuth, userController.addEventBudget);
 
 router.post('/search-guest-list', isAuth, userController.searchGuestList);
 
 router.post('/add-event-venue', isAuth, userController.addEventVenue);
 
+router.get('/get-event-quotation', isAuth, userController.getQuotation);
+
 module.exports = router;
+
+
+
+

@@ -11,6 +11,9 @@ const Banners = sequelize.define('banner', {
   image: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  index: {
+    type: Sequelize.STRING,
   }
 });
 

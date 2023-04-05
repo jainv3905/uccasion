@@ -11,7 +11,7 @@ router.post('/signup', [
     .withMessage('phone number must be 6 digit')
 ], authController.postSignup);
 
-router.post('/login',[
+router.post('/user-login',[
     body('email').isEmail().withMessage('email formate is wrong'),
 ], authController.login);
 

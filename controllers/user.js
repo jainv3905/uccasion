@@ -6,6 +6,7 @@ const Category = require('../models/category');
 const Category_Image = require('../models/category-image');
 const Event = require('../models/event');
 const Event_Service = require('../models/event-service');
+const Vendor_Service = require('../models/vendor-service');
 
 exports.postAddGuest = async (req, res, next) => {
     const errors = validationResult(req);
@@ -15,20 +16,23 @@ exports.postAddGuest = async (req, res, next) => {
         });
     }
     let totalGuest, guestLimit = 0;
-    let guestCount = await Event.findAll({ where: { userId: req.userId } });
-    for (g of guestCount) {
-        totalGuest = g.guestCount;
-    }
+    let guestCount = await Event.findOne({ where: { userId: req.userId } });
+    totalGuest = guestCount.guestCount;
+    console.log(totalGuest);
     const guest_limit = await Guest.findAll({ where: { userId: req.userId } });
     for (limit of guest_limit) {
         guestLimit += +limit.capacity;
     }
     try {
-        if ((guestLimit + req.body.capacity) > totalGuest) {
+        if ((guestLimit + req.body.capacity) > totalGuest && totalGuest!==null) {
             const error = new Error(`!sorry...your guest limit is ${totalGuest}`);
             error.status = 400;
             throw error;
         }
+        // else{
+        //     guestCount.guestCount = guestLimit
+        //     await guestCount.save();
+        // }
         const guest = await Guest.create({
             first_name: req.body.first_name,
             last_name: req.body.last_name,
@@ -69,14 +73,19 @@ exports.eventPage = async (req, res, next) => {
 }
 
 exports.firstPage = async (req, res, next) => {
-    const services = await Service.findAll();
+    let serviceArray = [];
+    const services = await Vendor_Service.findAll();
     try {
         if (!services) {
             const error = new Error('services not found');
             error.statusCode = 404;
             throw error
         }
-        res.status(200).json({ Service: services, status: true });
+        for(s of services){
+            const vendorServices = await Service.findByPk(s.serviceId);
+            serviceArray.push(vendorServices.service);
+        }
+        res.status(200).json({ Service: serviceArray, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -162,93 +171,93 @@ exports.getVenueAddress = async (req, res, next) => {
     }
 }
 
-// exports.addEventDate = async (req, res, next) => {
-//     const date = req.body.date;
-//     const event = await Event.create({
-//         date: date,
-//         userId: req.userId
-//     })
-//     try {
-//         res.status(201).json({ event: event });
-//     } catch (err) {
-//         if (!err.statusCode) {
-//             err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
+exports.addEventDate = async (req, res, next) => {
+    const date = req.body.date;
+    const event = await Event.create({
+        date: date,
+        userId: req.userId
+    })
+    try {
+        res.status(201).json({ event: event });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
 
-// exports.addEventOccasion = async (req, res, next) => {
-//     const occasion = req.body.occasion;
-//     const date = req.body.date;
-//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-//     try {
-//         if (event) {
-//             event.event = occasion;
-//             await event.save();
-//             res.status(201).json({ event: event });
-//         } else {
-//             const newEvent = await Event.create({
-//                 event: occasion,
-//                 userId: req.userId
-//             })
-//             res.status(201).json({ event: newEvent });
-//         }
-//     } catch (err) {
-//         if (!err.statusCode) {
-//             err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
+exports.addEventOccasion = async (req, res, next) => {
+    const occasion = req.body.occasion;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.event = occasion;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                event: occasion,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
 
-// exports.addEventGuest = async (req, res, next) => {
-//     const guest = req.body.guest;
-//     const date = req.body.date;
-//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-//     try {
-//         if (event) {
-//             event.guestCount = guest;
-//             await event.save();
-//             res.status(201).json({ event: event });
-//         } else {
-//             const newEvent = await Event.create({
-//                 guestCount: guest,
-//                 userId: req.userId
-//             })
-//             res.status(201).json({ event: newEvent });
-//         }
-//     } catch (err) {
-//         if (!err.statusCode) {
-//             err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
+exports.addEventGuest = async (req, res, next) => {
+    const guest = req.body.guest;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.guestCount = guest;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                guestCount: guest,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
 
-// exports.addEventBudget = async (req, res, next) => {
-//     const budget = req.body.budget;
-//     const date = req.body.date;
-//     const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
-//     try {
-//         if (event) {
-//             event.budget = budget;
-//             await event.save();
-//             res.status(201).json({ event: event });
-//         } else {
-//             const newEvent = await Event.create({
-//                 budget: budget,
-//                 userId: req.userId
-//             })
-//             res.status(201).json({ event: newEvent });
-//         }
-//     } catch (err) {
-//         if (!err.statusCode) {
-//             err.statusCode = 500;
-//         }
-//         next(err);
-//     }
-// }
+exports.addEventBudget = async (req, res, next) => {
+    const budget = req.body.budget;
+    const date = req.body.date;
+    const event = await Event.findOne({ where: [{ userId: req.userId }, { date: date }] });
+    try {
+        if (event) {
+            event.budget = budget;
+            await event.save();
+            res.status(201).json({ event: event });
+        } else {
+            const newEvent = await Event.create({
+                budget: budget,
+                userId: req.userId
+            })
+            res.status(201).json({ event: newEvent });
+        }
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
 
 exports.addEventVenue = async (req, res, next) => {
     let id;
@@ -308,3 +317,34 @@ exports.searchGuestList = async (req, res, next) => {
         next(err);
     }
 }
+
+exports.getQuotation = async (req, res, next) => {
+  let findService, allService = [];
+  const userId = req.userId;
+  const eventId = await Event.findOne({where:{userId: userId}})
+  const eventServices = await Event_Service.findAll({where: {eventId:eventId.id} });
+  try{
+    if(eventServices.length<0){
+        const error = new Error('no services found with this event');
+        error.statusCode = 401;
+        throw error;
+    }
+    for(let eventServc of eventServices){
+        console.log(eventServc.category);
+        findService = await Category.findOne({where: 
+            {id: eventServc.category}, include:Service
+        }
+        )
+        allService.push(findService)
+    }
+    res.status(200).json({eventServices: allService});
+} catch (err) {
+    if (!err.statusCode) {
+        err.statusCode = 500;
+    }
+    next(err);
+}
+} 
+
+
+

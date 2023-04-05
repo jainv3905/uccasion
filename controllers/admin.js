@@ -11,6 +11,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Marketing = require('../models/marketing-screens');
 const Banners = require('../models/banner');
+const Event = require('../models/event');
+const Event_Service = require('../models/event-service');
 
 exports.addAdminLogin = async (req, res, next) => {
     const email = req.body.email;
@@ -117,21 +119,11 @@ exports.postAddVendor = async (req, res, next) => {
             errorMessage: errors.array()[0].msg,
         });
     }
-    // if (!req.files) {
-    //     return res.status(422).json({
-    //         message: 'image not provided', status: 'false'
-    //     });
-    // }
     const vendor = await Vendor.create({
         name: req.body.name,
         email: email,
         phone: req.body.phone,
-        outlet_name: req.body.outlet_name,
-        outlet_address: req.body.outlet_address,
-        outlet_contact: req.body.outlet_contact,
-        outlet_description: req.body.outlet_description,
         status: "continue"
-        //    outlet_image: req.files.outlet[0].filename
     });
     try {
         if (!vendor) {
@@ -151,12 +143,6 @@ exports.postAddVendor = async (req, res, next) => {
             password: hashedPassword,
             type: "vendor"
         })
-        for (v of req.body.vendorservice) {
-            const vendorService = await Vendor_Service.create({
-                service: v,
-                vendorId: vendor.id
-            })
-        }
         res.status(200).json({ vendor: vendor, message: "vendor added succesfully", status: true });
     } catch (err) {
         if (!err.statusCode) {
@@ -286,13 +272,27 @@ exports.getUser = async (req, res, next) => {
 
 exports.getallVendors = async (req, res, next) => {
     const vendor = await Vendor.findAll();
+    let services = [], occasion = [], setServices = [], setOccasion = [];
     try {
         if (!vendor) {
             const error = new Error('vendor not found');
             error.statusCode = 401;
             throw error;
         }
-        res.status(200).json({ vendor: vendor });
+        for(v of vendor) {
+        vendorDetails = await Vendor_Service.findAll({where: {vendorId:v.id}});
+        for(vndr of vendorDetails) {
+            services.push(vndr.serviceId);
+            occasion.push(vndr.occasionId);
+        }
+        newOccasion = new Set(occasion);
+        newServices = new Set(services);
+        setServices.push(newServices.size);
+        setOccasion.push(newOccasion.size);
+        services = [], occasion = [], newOccasion = [], newServices = []
+        }
+        console.log(setServices, setOccasion);
+        res.status(200).json({ vendor: vendor, setServices, setOccasion });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -500,7 +500,7 @@ exports.addMarketingImage = async (req,res, next) => {
     }
     const image = req.files.marketing[0].filename;
     const marketing = await Marketing.create({
-        image: image   
+        image: image,
     });
     try{
         if(!marketing){
@@ -508,7 +508,9 @@ exports.addMarketingImage = async (req,res, next) => {
         error.statusCode = 400;
         throw error;             
         }
-    res.status(201).json({marketingImage:marketing
+        marketing.index = marketing.id;
+        const updateMarketing = await marketing.save();
+    res.status(201).json({marketingImage:updateMarketing
         , message: "image addes successsfully"
         , status: true
     })
@@ -543,7 +545,9 @@ exports.addBanner = async (req, res, next) => {
         error.statusCode = 400;
         throw error;             
         }
-    res.status(201).json({banner:banner
+        banner.index = banner.id;
+        const updateBanner = await Banners.save();
+    res.status(201).json({banner:updateBanner
         , message: "banner addes successsfully"
         , status: true
     })
@@ -726,3 +730,140 @@ exports.deleteBanners = async (req, res, next) => {
        next(err);
    }   
    }
+
+exports.postAddVendorService = async (req, res, next) => {
+    const vendorId = req.body.vendorId;
+    const occasionId = req.body.occasionId;
+    const serviceId = req.body.serviceId;
+    const vendorService = await Vendor_Service.create({
+        serviceId: serviceId,
+        occasionId: occasionId,
+        vendorId: vendorId
+    });
+
+    try{
+        if(!vendorService){
+        const error = new Error('vendor service not created');
+        error.statusCode = 400;
+        throw error;             
+        }
+        res.status(201).json({vendorService:vendorService
+        , status: true
+    })
+    } catch (err) {
+        if(!err.statusCode){
+            err.statusCode = 500;
+        }
+        next(err);
+    }   
+}
+
+exports.getSpecificVendor = async (req, res, next) => {
+    const vendorId = req.params.id;
+    const vendor = await Vendor.findByPk(vendorId);
+    try {
+        if (!vendor) {
+            const error = new Error('vendor not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        res.status(200).json({ vendor: vendor });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
+
+
+exports.getSpecificVendorOccasion = async (req, res, next) => {
+    let arr1 = []
+    const vendorId = req.params.id;
+    const vendor = await Vendor_Service.findAll({where: {vendorId:vendorId}});
+    try {
+        if (!vendor) {
+            const error = new Error('vendorService not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        for(vendor_occasion of vendor){
+            const occasion = await Occasion.findByPk(vendor_occasion.occasionId);
+            arr1.push(occasion);
+        }
+        res.status(200).json({ vendorOccasion: arr1 , status:true});
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }   
+}
+
+exports.getSpecificVendorService= async (req, res, next) => {
+    let arr1 = []
+    const vendorId = req.params.id;
+    const vendor = await Vendor_Service.findAll({where: {vendorId:vendorId}});
+    try {
+        if (!vendor) {
+            const error = new Error('vendorService not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        for(vendor_occasion of vendor){
+            const service = await Service.findByPk(vendor_occasion.serviceId);
+            arr1.push(service);
+        }
+        res.status(200).json({ vendorService: arr1, status:true });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }   
+}
+
+exports.getSpecificVendorCategory = async (req, res, next) => {
+    const vendorId = req.body.vendorId;
+    const serviceId = req.body.serviceId;
+    const category = await Category.findAll({where: [{vendorId: vendorId}, {serviceId:serviceId}]})
+    try {
+        if (!category) {
+            const error = new Error('category not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        res.status(200).json({ category: category });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }    
+}
+
+exports.userRequestedEvent = async (req, res, next) => {
+const findEvent = await Event.findAll({include:[User]});
+let newObject = [], service;
+try {
+        if (!findEvent) {
+            const error = new Error('event not found');
+            error.statusCode = 401;
+            throw error;
+        }
+        for(f of findEvent){
+            newObject.push(f);
+            const event_service = await Event_Service.findAll({where: {eventId: f.id}});
+            for(e of event_service){
+                service = await Service.findByPk(e.service);
+            newObject.push(service.service);
+            }
+        }
+        res.status(200).json({ event: newObject });
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+}
