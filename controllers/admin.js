@@ -18,7 +18,7 @@ const RequestedEvent = require('../models/requestedEvent');
 const Invitation = require('../models/invitation');
 const Vendor = require('../models/vendor');
 const Quotation = require('../models/quotation');
-const {Sequelize} = require('sequelize');
+const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
 exports.addAdminLogin = async (req, res, next) => {
@@ -479,6 +479,7 @@ exports.changeOccasionStatus = async (req, res, next) => {
 exports.changeServiceStatus = async (req, res, next) => {
     const serviceId = req.body.serviceId;
     const status = req.body.status;
+    console.log(serviceId);
     const service = await Service.findByPk(serviceId);
     try {
         if (!service) {
@@ -1182,9 +1183,14 @@ exports.dashBoards = async (req, res, next) => {
     const vendor = await Vendor.findAll();
     const occasion = await Occasion.findAll();
     const services = await Service.findAll();
+    const invitation = await Invitation.findAll();
     try {
         res.status(200).json({
-            user: user.length, vendor: vendor.length, occasion: occasion.length, services: services.length,
+            user: user.length,
+            vendor: vendor.length,
+            occasion: occasion.length,
+            services: services.length,
+            invitation: invitation.length,
             status: true
         })
     } catch (err) {
@@ -1273,7 +1279,7 @@ exports.addInvitation = async (req, res, next) => {
         const invitation = await Invitation.create({
             image: process.env.URL + req.files.image[0].path.replace('images\\', '/'),
             backgroundColor: bgColor,
-            event:req.body.occasion,
+            event: req.body.occasion,
         })
         if (!invitation) {
             const error = new Error('invitation not created');
@@ -1353,6 +1359,10 @@ exports.sendQuotationToUser = async (req, res, next) => {
             employeId: employeId
         })
     }
+    const quotation = await RequestedEvent.findAll({where:{eventId:eventId}});
+    for(q of quotation){
+        await q.destroy();
+    }
     try {
         res.status(200).json({ data: quotation, status: true, message: "quotation send successfully" });
     } catch (err) {
@@ -1364,27 +1374,28 @@ exports.sendQuotationToUser = async (req, res, next) => {
 }
 
 exports.cancelBookings = async (req, res, next) => {
-    const findEvent = await Quotation.findAll({where:
+    const findEvent = await Quotation.findAll({
+        where:
         {
-            status:{[Sequelize.Op.notIn]:[1,'']}
+            status: { [Sequelize.Op.notIn]: [1, ''] }
         }
     });
-    let newObject = [], newObject2 = new Set(), service,newObject3 =[];
+    let newObject = [], newObject2 = new Set(), service, newObject3 = [];
     try {
         for (f of findEvent) {
             newObject2.add(f.user);
         }
-        for(n of newObject2){
-        const findEvents = await Quotation.findAll({where:{user:n}});
-        for(ev of findEvents){
-            const service = await Service.findByPk(ev.serviceId);
-            newObject.push(service);
+        for (n of newObject2) {
+            const findEvents = await Quotation.findAll({ where: { user: n } });
+            for (ev of findEvents) {
+                const service = await Service.findByPk(ev.serviceId);
+                newObject.push(service);
+            }
+            const userdetails = await User.findByPk(n);
+            userdetails.dataValues.service = newObject
+            newObject3.push(userdetails);
         }
-        const userdetails = await User.findByPk(n);
-        userdetails.dataValues.service = newObject
-        newObject3.push(userdetails);
-        }
-        res.status(200).json({ event: newObject3 ,status:true});
+        res.status(200).json({ event: newObject3, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -1394,71 +1405,73 @@ exports.cancelBookings = async (req, res, next) => {
 }
 
 exports.acceptedBookings = async (req, res, next) => {
-    const findEvent = await Quotation.findAll({where:
+    const findEvent = await Quotation.findAll({
+        where:
         {
-            status:{[Sequelize.Op.in]:[1]}
+            status: { [Sequelize.Op.in]: [1] }
         }
     });
-    let newObject = [], newObject2 = new Set(), service,newObject3 =[];
+    let newObject = [], newObject2 = new Set(), service, newObject3 = [];
     try {
         for (f of findEvent) {
             newObject2.add(f.user);
         }
-        for(n of newObject2){
-        const event = await Event.findOne({where:{userId:n}});
-        console.log(new Date(event.date),new Date());
-        if(new Date(event.date).getTime()>new Date().getTime()){
-        const findEvents = await Quotation.findAll({where:{user:n}});
-        for(ev of findEvents){
-            const service = await Service.findByPk(ev.serviceId);
-            newObject.push(service);
+        for (n of newObject2) {
+            const event = await Event.findOne({ where: { userId: n } });
+            console.log(new Date(event.date), new Date());
+            if (new Date(event.date).getTime() > new Date().getTime()) {
+                const findEvents = await Quotation.findAll({ where: { user: n } });
+                for (ev of findEvents) {
+                    const service = await Service.findByPk(ev.serviceId);
+                    newObject.push(service);
+                }
+                const userdetails = await User.findByPk(n);
+                userdetails.dataValues.service = newObject
+                newObject3.push(userdetails);
+            }
         }
-        const userdetails = await User.findByPk(n);
-        userdetails.dataValues.service = newObject
-        newObject3.push(userdetails);
-        }
-    }
-        res.status(200).json({ event: newObject3,status:true });
+        res.status(200).json({ event: newObject3, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
-    }   
+    }
 }
 
 exports.completedBookings = async (req, res, next) => {
-    const findEvent = await Quotation.findAll({where:
+    const findEvent = await Quotation.findAll({
+        where:
         {
-            status:{[Sequelize.Op.in]:[1]}
+            status: { [Sequelize.Op.in]: [1] }
         }
     });
-    let newObject = [], newObject2 = new Set(), service,newObject3 =[];
+    let newObject = [], newObject2 = new Set(), service, newObject3 = [];
     try {
         for (f of findEvent) {
             newObject2.add(f.user);
         }
-        for(n of newObject2){
-        const event = await Event.findOne({where:{userId:n}});
-        console.log(new Date(event.date),new Date());
-        if(new Date(event.date).getTime()<new Date().getTime()){
-        const findEvents = await Quotation.findAll({where:{user:n}});
-        for(ev of findEvents){
-            const service = await Service.findByPk(ev.serviceId);
-            newObject.push(service);
+        for (n of newObject2) {
+            const event = await Event.findOne({ where: { userId: n } });
+            console.log(new Date(event.date), new Date());
+            if (new Date(event.date).getTime() < new Date().getTime()) {
+                const findEvents = await Quotation.findAll({ where: { user: n } });
+                for (ev of findEvents) {
+                    const service = await Service.findByPk(ev.serviceId);
+                    newObject.push(service);
+                }
+                const userdetails = await User.findByPk(n);
+                userdetails.dataValues.service = newObject
+                newObject3.push(userdetails);
+            }
         }
-        const userdetails = await User.findByPk(n);
-        userdetails.dataValues.service = newObject
-        newObject3.push(userdetails);
-        }
-    }
-        res.status(200).json({ event: newObject3,status:true });
+        res.status(200).json({ event: newObject3, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
-    }   I
+    } I
 }
 
 exports.getInvitationCard = async (req, res, next) => {
@@ -1470,5 +1483,5 @@ exports.getInvitationCard = async (req, res, next) => {
             err.statusCode = 500;
         }
         next(err);
-    }   
+    }
 }

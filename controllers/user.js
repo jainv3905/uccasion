@@ -672,7 +672,7 @@ exports.getUserGuest = async (req, res, next) => {
 exports.getInvitationImage = async (req, res, next) => {
     const eventId = await Event.findOne({where:{userId:req.userId}});
     console.log(eventId);
-    const invitation = await Invitation.findAll({where:{event:eventId.event}});
+    const invitation = await Invitation.findAll();
     try {
         res.status(200).json({ data: invitation, status: true });
     } catch (err) {
