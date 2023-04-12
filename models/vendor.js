@@ -20,6 +20,10 @@ const Vendor = sequelize.define('vendor', {
     type: Sequelize.BIGINT,
     allowNull: false
   },
+  password: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
   status: {
     type: Sequelize.STRING
   }

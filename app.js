@@ -16,12 +16,30 @@ const Event = require('./models/event');
 const Event_Service = require('./models/event-service');
 const Vendor = require('./models/vendor');
 const Vendor_Service = require('./models/vendor-service');
+const path = require('path');
+const RequestedEvent = require('./models/requestedEvent');
+const InvitationList = require('./models/invitationList');
+const Employe = require('./models/employe');
+const Quotation = require('./models/quotation');
 
 app.use(cors({
   allowedHeaders: "*",
   origin: "*"
 }));
+
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Access-Control-Allow-Methods','*');
+  res.setHeader('Access-Control-Allow-Headers','content-type');
+  if(req.method === 'OPTIONS'){
+    return res.sendStatus(200);
+  }
+  next();
+})
+
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, 'images')));
 
 app.use(
   multer({
@@ -30,7 +48,13 @@ app.use(
         cb(null, "images")
       },
       filename: function (req, file, cb) {
-        cb(null, file.fieldname + "-" + Date.now() + ".jpg")
+        console.log(file);
+        if(file.mimetype == 'application/pdf'){
+          console.log("yes");
+        cb(null, file.fieldname + "_" + Date.now()+".pdf");
+        }else{
+        cb(null, file.fieldname + "_" + Date.now()+".jpg");
+        }
       }
     })
   }).fields([
@@ -106,6 +130,30 @@ Vendor.hasMany(Category, {
 });
 Category.belongsTo(Vendor, { constraints: true, onDelete: 'CASCADE' });
 
+User.hasMany(RequestedEvent, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+RequestedEvent.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
+
+User.hasMany(InvitationList, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+InvitationList.belongsTo(User, { constraints: true, onDelete: 'CASCADE' });
+
+Employe.hasMany(Quotation, {
+  foriegnKey: {
+    type: DataTypes.UUID,
+    allowNull: false
+  }
+});
+Quotation.belongsTo(Employe, { constraints: true, onDelete: 'CASCADE' });
+
 app.use(adminRoutes);
 app.use(authRoutes);
 app.use(userRoutes);
@@ -125,3 +173,7 @@ sequelize.sync()
     })
   })
   .catch(err => console.log(err));
+
+
+  // , include: [{model: Category, where:{id:eventServc.category}}]
+  //           }

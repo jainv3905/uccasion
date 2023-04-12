@@ -23,7 +23,10 @@ const Category = sequelize.define('category', {
   },
   price: {
     type: Sequelize.INTEGER
-  }
+  },
+  status: {
+    type: Sequelize.STRING
+  },
 });
 
 module.exports = Category;

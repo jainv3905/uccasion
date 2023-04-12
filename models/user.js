@@ -23,6 +23,9 @@ const User = sequelize.define('user', {
   phone: {
     type: Sequelize.BIGINT
   },
+  countryCode: {
+    type: Sequelize.INTEGER,
+  },
   token:{
     type: Sequelize.STRING
   },

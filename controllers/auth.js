@@ -30,6 +30,7 @@ exports.postSignup = async (req, res, next) => {
       last_name:req.body.last_name,
       email:email,
       phone:req.body.phone,
+      countryCode: req.body.countryCode,
       status:"active"
     })
     res.status(201).json({message: 'user created', user:newUser,status:true});
@@ -42,17 +43,18 @@ exports.postSignup = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
-  const email = req.body.email;
+  const phone = req.body.phone;
+  const countryCode = req.body.countryCode
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({
         errorMessage: errors.array()[0].msg,
     });
   }
-  const user = await User.findOne({where: {email:email}});
+  const user = await User.findOne({where: [{phone:phone},{countryCode:countryCode}]});
   try{
     if(!user){
-      const error = new Error('user not found with this email');
+      const error = new Error('user not found with this phoneno');
       error.statusCode = 400;
       throw error;
     }
@@ -69,10 +71,16 @@ exports.login = async (req, res, next) => {
       //     console.log(info);
       //   }
       // })
-    const otp = Math.round(Math.random()*10000);
+    
+    const otp = Math.floor(Math.random()*1000000).toString();
     user.otp = otp;
-    await user.save();
-    res.status(200).json({'message': "otp send", otp:otp});
+    console.log(otp.length);
+    if(otp.length!==6){
+      this.login(req, res, next);
+    }else{
+      await user.save();
+     res.status(200).json({'message': "otp send", otp:otp, status:true});
+    }
   } catch(err) {
     if(!err.statusCode){
       err.statusCode = 500;
@@ -83,17 +91,18 @@ exports.login = async (req, res, next) => {
 
 exports.otp = async (req, res, next) => {
   const otp = req.body.otp;
-  const email = req.body.email;
+  const phone = req.body.phone;
+  const countryCode = req.body.countryCode
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({
         errorMessage: errors.array()[0].msg,
     });
   }
-  const user = await User.findOne({where:[{email:email},{otp:otp}]});
+  const user = await User.findOne({where:[{phone:phone},{countryCode:countryCode},{otp:otp}]});
   try{
   if(!user){
-    const error = new Error('user not found');
+    const error = new Error('otp is wrong');
     error.statusCode = 401;
     throw error;
   }
@@ -104,7 +113,8 @@ exports.otp = async (req, res, next) => {
     },
     'somesupersecretsecret'
 );
-  user.token = token;
+  user.token ="Bearer " +token;
+  user.otp = '';
   const savedUser = await user.save();
   res.status(201).json({user:savedUser,status:true});
   } catch(err){
@@ -113,4 +123,23 @@ exports.otp = async (req, res, next) => {
     }
     next(err);
   }
+}
+
+exports.userDeatils = async (req, res, next) => {
+  const authHeader = req.get('Authorization');
+  console.log(authHeader);
+  const user = await User.findOne({where: {token:authHeader}});
+  try{
+    if(!user){
+      const error = new Error('user not found');
+      error.statusCode = 401;
+      throw error;
+    }
+    res.status(201).json({user:user,status:true});
+} catch(err){
+  if(!err.statusCode){
+    err.statusCode = 500;
+  }
+  next(err);
+}
 }

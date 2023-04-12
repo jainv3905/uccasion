@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Vendor_Service = sequelize.define('vendor-service', {
+const Vendor_Service = sequelize.define('vendorservice', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
@@ -13,6 +13,9 @@ const Vendor_Service = sequelize.define('vendor-service', {
   },
   occasionId: {
     type: Sequelize.INTEGER
+  },
+  status: {
+    type: Sequelize.STRING
   }
 });
 

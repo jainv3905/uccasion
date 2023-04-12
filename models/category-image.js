@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Category_Image = sequelize.define('category-image', {
+const Category_Image = sequelize.define('categoryImage', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,

@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Event_Service = sequelize.define('event-service', {
+const Event_Service = sequelize.define('eventservice', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
