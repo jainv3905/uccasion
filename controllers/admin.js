@@ -943,16 +943,32 @@ exports.userRequestedEvent = async (req, res, next) => {
         }
         for (f of findEvent) {
             const user = await User.findByPk(f.userId);
+            const occasion = await Occasion.findByPk(f.event);
             const event_service = await RequestedEvent.findAll({ where: [{ userId: f.userId }, { eventId: f.id }] });
             for (e of event_service) {
-                service = await Service.findByPk(e.serviceId, { attributes: ['service'] });
+                service = await Service.findByPk(e.serviceId, { 
+                    include: [
+                        {
+                            model: Category,
+                            where: {id:e.categoryId}
+                        }
+                    ]
+             });  
+             console.log(service.dataValues.categories[0].dataValues.vendorId);
+             const vendor = await Vendor.findByPk(service.dataValues.categories[0].dataValues.vendorId);
+                service.dataValues.vendorname = vendor.name
                 newObject.push(service);
             }
             user.dataValues.service = newObject;
+            user.dataValues.occasionName = occasion.occasion
+            user.dataValues.eventDate = f.date;
+            user.dataValues.eventId = f.id
+            user.dataValues.guestCount = f.guestCount;
+            user.dataValues.budget = f.budget
             newObject2.push(user);
             newObject = [];
         }
-        res.status(200).json({ event: newObject2 });
+        res.status(200).json({ event: newObject2,status:true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -1042,7 +1058,13 @@ exports.eventCancelQuestion = async (req, res, next) => {
 
 exports.addEmploye = async (req, res, next) => {
     const email = req.body.email;
-    const password = req.body.password
+    const password = req.body.password;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({
+            errorMessage: errors.array()[0].msg,
+        });
+    }
     if (req.files) {
         image = process.env.URL + req.files.image[0].path.replace('images\\', '/');
     } else {
@@ -1309,13 +1331,13 @@ exports.getSpecificServiceCategory = async (req, res, next) => {
 }
 
 exports.getUserServiceDetails = async (req, res, next) => {
-    const userId = req.params.userId;
-    const event = await Event.findOne({ where: { userId: userId }, include: User });
+    const eventId = req.params.eventId;
+    const event = await Event.findOne({ where: { id: eventId }, include: User });
     const occasion = await Occasion.findByPk(event.event);
     event.event = occasion.occasion
     const categoryArray = [];
     let userServiceArray = [];
-    const requestedEvent = await RequestedEvent.findAll({ where: { userId: userId } });
+    const requestedEvent = await RequestedEvent.findAll({ where: { eventId: eventId } });
     try {
         for (r of requestedEvent) {
             categoryArray.push(r.categoryId)
@@ -1324,6 +1346,7 @@ exports.getUserServiceDetails = async (req, res, next) => {
             const category = await Category.findByPk(c);
             const service = await Service.findByPk(category.serviceId);
             const vendorr = await Vendor.findByPk(category.vendorId);
+            console.log(vendorr);
             category.dataValues.servicename = service.service;
             category.dataValues.vendorname = vendorr.name;
             userServiceArray.push(category);
@@ -1386,13 +1409,28 @@ exports.cancelBookings = async (req, res, next) => {
             newObject2.add(f.user);
         }
         for (n of newObject2) {
+            let eventt;
             const findEvents = await Quotation.findAll({ where: { user: n } });
             for (ev of findEvents) {
-                const service = await Service.findByPk(ev.serviceId);
+                service = await Service.findByPk(ev.serviceId, { 
+                    include: [
+                        {
+                            model: Category,
+                            where: {id:ev.categoryId}
+                        }
+                    ]
+             });  
+                eventt = await Event.findByPk(ev.event);
                 newObject.push(service);
             }
             const userdetails = await User.findByPk(n);
-            userdetails.dataValues.service = newObject
+            const occasion = await Occasion.findByPk(eventt.event);
+            userdetails.dataValues.service = newObject;
+            userdetails.dataValues.date = eventt.date;
+            userdetails.dataValues.occasionName = occasion.occasion;
+            userdetails.dataValues.userEventId = eventt.id
+            userdetails.dataValues.guestCount = eventt.guestCount;
+            userdetails.dataValues.budget = eventt.budget
             newObject3.push(userdetails);
         }
         res.status(200).json({ event: newObject3, status: true });
@@ -1422,11 +1460,25 @@ exports.acceptedBookings = async (req, res, next) => {
             if (new Date(event.date).getTime() > new Date().getTime()) {
                 const findEvents = await Quotation.findAll({ where: { user: n } });
                 for (ev of findEvents) {
-                    const service = await Service.findByPk(ev.serviceId);
+                    service = await Service.findByPk(ev.serviceId, { 
+                        include: [
+                            {
+                                model: Category,
+                                where: {id:ev.categoryId}
+                            }
+                        ]
+                 });  
+                    eventt = await Event.findByPk(ev.event);
                     newObject.push(service);
                 }
                 const userdetails = await User.findByPk(n);
                 userdetails.dataValues.service = newObject
+                const occasion = await Occasion.findByPk(eventt.event);
+                userdetails.dataValues.date = eventt.date;
+                userdetails.dataValues.occasionName = occasion.occasion;
+                userdetails.dataValues.userEventId = eventt.id
+                userdetails.dataValues.guestCount = eventt.guestCount;
+                userdetails.dataValues.budget = eventt.budget
                 newObject3.push(userdetails);
             }
         }
@@ -1457,11 +1509,25 @@ exports.completedBookings = async (req, res, next) => {
             if (new Date(event.date).getTime() < new Date().getTime()) {
                 const findEvents = await Quotation.findAll({ where: { user: n } });
                 for (ev of findEvents) {
-                    const service = await Service.findByPk(ev.serviceId);
+                    service = await Service.findByPk(ev.serviceId, { 
+                        include: [
+                            {
+                                model: Category,
+                                where: {id:ev.categoryId}
+                            }
+                        ]
+                 });  
+                    eventt = await Event.findByPk(ev.event);
                     newObject.push(service);
                 }
                 const userdetails = await User.findByPk(n);
                 userdetails.dataValues.service = newObject
+                const occasion = await Occasion.findByPk(eventt.event);
+                userdetails.dataValues.date = eventt.date;
+                userdetails.dataValues.occasionName = occasion.occasion;
+                userdetails.dataValues.userEventId = eventt.id
+                userdetails.dataValues.guestCount = eventt.guestCount;
+                userdetails.dataValues.budget = eventt.budget
                 newObject3.push(userdetails);
             }
         }
@@ -1475,9 +1541,15 @@ exports.completedBookings = async (req, res, next) => {
 }
 
 exports.getInvitationCard = async (req, res, next) => {
+    let images = []
     const invitation = await Invitation.findAll();
     try {
-        res.status(200).json({ data: invitation, status: true });
+        for(i of invitation){
+            const occasion = await Occasion.findByPk(i.event);
+            i.dataValues.event = occasion.occasion;
+            images.push(i);
+        }
+        res.status(200).json({ data: images, status: true });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;

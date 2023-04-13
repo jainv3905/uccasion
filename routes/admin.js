@@ -4,6 +4,7 @@ const adminController = require('../controllers/admin');
 const { body } = require('express-validator/check');
 const Vendor = require('../models/vendor');
 const isAuth = require('../middleware/is-auth');
+const Employe = require('../models/employe');
 
 router.post('/add-login', isAuth,adminController.addAdminLogin);
 
@@ -92,7 +93,7 @@ router.post('/add-employe',  [
     body('name').isLength({min: 3}).withMessage('name at least 3 characters'),
     body('email').isEmail().withMessage('email is not valid')
     .custom((value, { req }) => {
-        return Vendor.findAll({ where: { email:value } })
+        return Employe.findAll({ where: { email:value } })
             .then(user => {
                 if (user.length > 0) {
                     return Promise.reject('email exist,please pick another one...');
@@ -127,7 +128,7 @@ router.post('/get-specific-service-category', isAuth, adminController.getSpecifi
 
 router.post('/post-update-vendor', isAuth, adminController.postUpdateVendor);
 
-router.get('/get-user-service-details/:userId', isAuth, adminController.getUserServiceDetails);
+router.get('/get-user-service-details/:eventId', isAuth, adminController.getUserServiceDetails);
 
 router.post('/send-quotation-to-user', isAuth, adminController.sendQuotationToUser);
 
